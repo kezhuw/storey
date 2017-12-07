@@ -1,0 +1,11 @@
+# Files and directories created by pub
+pubspec.lock
+.packages
+.pub/
+build/
+
+# Directory created by dartdoc
+doc/api/
+
+# IDE files
+.idea/
