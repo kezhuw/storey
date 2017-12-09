@@ -40,12 +40,12 @@ class ProxyTypedMiddleware<S, A extends Action> {
 
   final TypedMiddleware<S, A> middleware;
 
-  bool _handlesAction(dynamic state, Action action) {
-    return state is S && action is A;
+  bool _handlesAction(Store<dynamic> store, Action action) {
+    return store is Store<S> && action is A;
   }
 
   void call(Store<dynamic> store, Action action, Dispatcher next) {
-    if (_handlesAction(store.state, action)) {
+    if (_handlesAction(store, action)) {
       return middleware(store, action, next);
     }
     return next(action);

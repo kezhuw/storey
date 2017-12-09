@@ -34,8 +34,16 @@ void main() {
 
     Middleware typedMiddleware = new ProxyTypedMiddleware<FooState, FooAction>(fooMiddleware);
 
-    test('middleware is called for matching state and action', () {
+    test('middleware is called for matching store and action', () {
       Store<FooState> fooStore = new Store<FooState>(name: 'foo', reducer: nopReducer, initialState: new FooState());
+
+      typedMiddleware(fooStore, new FooAction(), nextDispatcher);
+
+      expect(logs, <String>['foo', 'next']);
+    });
+
+    test('middleware is called for matching store, with null state, and action', () {
+      Store<FooState> fooStore = new Store<FooState>(name: 'foo', reducer: nopReducer, initialState: null);
 
       typedMiddleware(fooStore, new FooAction(), nextDispatcher);
 
