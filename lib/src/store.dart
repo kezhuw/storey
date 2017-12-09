@@ -12,13 +12,13 @@ class _ActionResult<Response> {
 }
 
 @immutable
-abstract class RequestAction<T> extends Action {
+abstract class RequestAction<R> extends Action {
   RequestAction();
 
-  final _ActionResult<T> _result = new _ActionResult<T>();
+  final _ActionResult<R> _result = new _ActionResult<R>();
 
-  T get result => _result.value;
-  void set result(T newValue) {
+  R get result => _result.value;
+  void set result(R newValue) {
     _result.value = newValue;
   }
 }
@@ -26,22 +26,22 @@ abstract class RequestAction<T> extends Action {
 typedef void Dispatcher(Action action);
 typedef void Middleware(Store<dynamic> store, Action action, Dispatcher next);
 
-typedef void TypedMiddleware<State, A extends Action>(Store<State> store, A action, Dispatcher next);
+typedef void TypedMiddleware<S, A extends Action>(Store<S> store, A action, Dispatcher next);
 
 // I wound like to export a static function instead of concrete class, but it won't work.
 //
-// Middleware createTypedMiddleware<State, A extends Action>(TypedMiddleware<State, A> typedMiddleware) {
-//   return new ProxyTypedMiddleware<State, A>(typedMiddleware);
+// Middleware createTypedMiddleware<S, A extends Action>(TypedMiddleware<S, A> typedMiddleware) {
+//   return new ProxyTypedMiddleware<S, A>(typedMiddleware);
 // }
 //
 // See: https://github.com/dart-lang/sdk/issues/31466 for more details.
-class ProxyTypedMiddleware<State, A extends Action> {
+class ProxyTypedMiddleware<S, A extends Action> {
   ProxyTypedMiddleware(this.middleware);
 
-  final TypedMiddleware<State, A> middleware;
+  final TypedMiddleware<S, A> middleware;
 
   bool _handlesAction(dynamic state, Action action) {
-    return state is State && action is A;
+    return state is S && action is A;
   }
 
   void call(Store<dynamic> store, Action action, Dispatcher next) {
@@ -52,25 +52,25 @@ class ProxyTypedMiddleware<State, A extends Action> {
   }
 }
 
-typedef State Reducer<State>(State state, Action action);
+typedef S Reducer<S>(S state, Action action);
 
-typedef State ActionReducer<State, A extends Action>(State state, A action);
+typedef S ActionReducer<S, A extends Action>(S state, A action);
 
-abstract class TypedReducer<State> {
+abstract class TypedReducer<S> {
   bool _handlesAction(Action action);
 
-  State call(State state, Action action);
+  S call(S state, Action action);
 }
 
-class ProxyTypedReducer<State, A extends Action> implements TypedReducer<State> {
+class ProxyTypedReducer<S, A extends Action> implements TypedReducer<S> {
   const ProxyTypedReducer(this.reducer);
 
-  final ActionReducer<State, A> reducer;
+  final ActionReducer<S, A> reducer;
 
   @protected
   bool _handlesAction(Action action) => action is A;
 
-  State call(State state, Action action) {
+  S call(S state, Action action) {
     if (_handlesAction(action)) {
       return reducer(state, action);
     }
@@ -78,27 +78,27 @@ class ProxyTypedReducer<State, A extends Action> implements TypedReducer<State> 
   }
 }
 
-class MergedTypedReducer<State> implements TypedReducer<State> {
+class MergedTypedReducer<S> implements TypedReducer<S> {
   const MergedTypedReducer(this.reducers);
 
-  final Iterable<TypedReducer<State>> reducers;
+  final Iterable<TypedReducer<S>> reducers;
 
   bool _handlesAction(Action action) {
-    assert(reducers.where((TypedReducer<State> reducer) => reducer._handlesAction(action)).length <= 1);
-    return reducers.any((TypedReducer<State> reducer) => reducer._handlesAction(action));
+    assert(reducers.where((TypedReducer<S> reducer) => reducer._handlesAction(action)).length <= 1);
+    return reducers.any((TypedReducer<S> reducer) => reducer._handlesAction(action));
   }
 
-  State call(State state, Action action) {
-    assert(reducers.where((TypedReducer<State> reducer) => reducer._handlesAction(action)).length <= 1);
-    return reducers.fold(state, (State model, TypedReducer<State> reducer) => reducer(model, action));
+  S call(S state, Action action) {
+    assert(reducers.where((TypedReducer<S> reducer) => reducer._handlesAction(action)).length <= 1);
+    return reducers.fold(state, (S model, TypedReducer<S> reducer) => reducer(model, action));
   }
 }
 
-class Store<State> {
+class Store<S> {
   Store({
     @required this.name,
-    @required State initialState,
-    @required Reducer<State> reducer,
+    @required S initialState,
+    @required Reducer<S> reducer,
     List<Store<dynamic>> children = const [],
     List<Middleware> middlewares = const [],
   })
@@ -106,7 +106,7 @@ class Store<State> {
         _reducer = reducer,
         _children = new Map.fromIterable(children, key: (Store<dynamic> store) => store.name),
         _middlewares = middlewares,
-        _streamController = new StreamController<State>.broadcast() {
+        _streamController = new StreamController<S>.broadcast() {
     _children.values.forEach((Store<dynamic> child) {
       child._parent = this;
     });
@@ -115,11 +115,11 @@ class Store<State> {
   final String name;
 
   @protected
-  State _state;
+  S _state;
 
-  State get state => _state;
+  S get state => _state;
 
-  final Reducer<State> _reducer;
+  final Reducer<S> _reducer;
   final Map<dynamic, Store<dynamic>> _children;
   final List<Middleware> _middlewares;
 
@@ -156,8 +156,8 @@ class Store<State> {
   }
 
   /// Due to limit of type system, the result store may no be a subtype of
-  /// Store<State>.
-  Store<State> find<State>({
+  /// Store<S>.
+  Store<S> find<S>({
     Iterable<dynamic> path,
     bool debugTypeMatcher(dynamic model),
   }) {
@@ -167,7 +167,7 @@ class Store<State> {
       assert(current != null);
     });
     assert(debugTypeMatcher == null || debugTypeMatcher(current.state));
-    return current as Store<State>;
+    return current as Store<S>;
   }
 
   void dispatch(Action action, {
@@ -181,8 +181,8 @@ class Store<State> {
     store._dispatch(action);
   }
 
-  final StreamController<State> _streamController;
-  Stream<State> get stream => _streamController.stream;
+  final StreamController<S> _streamController;
+  Stream<S> get stream => _streamController.stream;
 
   void _broadcast() {
     _streamController.add(_state);
