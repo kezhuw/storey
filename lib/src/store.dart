@@ -31,12 +31,12 @@ typedef void TypedMiddleware<State, A extends Action>(Store<State> store, A acti
 // I wound like to export a static function instead of concrete class, but it won't work.
 //
 // Middleware createTypedMiddleware<State, A extends Action>(TypedMiddleware<State, A> typedMiddleware) {
-//   return new TypedMiddlewareBinding<State, A>(typedMiddleware);
+//   return new ProxyTypedMiddleware<State, A>(typedMiddleware);
 // }
 //
 // See: https://github.com/dart-lang/sdk/issues/31466 for more details.
-class TypedMiddlewareBinding<State, A extends Action> {
-  TypedMiddlewareBinding(this.middleware);
+class ProxyTypedMiddleware<State, A extends Action> {
+  ProxyTypedMiddleware(this.middleware);
 
   final TypedMiddleware<State, A> middleware;
 

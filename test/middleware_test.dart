@@ -32,7 +32,7 @@ void main() {
       logs.add('next');
     }
 
-    Middleware typedMiddleware = new TypedMiddlewareBinding<FooState, FooAction>(fooMiddleware);
+    Middleware typedMiddleware = new ProxyTypedMiddleware<FooState, FooAction>(fooMiddleware);
 
     test('middleware is called for matching state and action', () {
       Store<FooState> fooStore = new Store<FooState>(name: 'foo', reducer: nopReducer, initialState: new FooState());

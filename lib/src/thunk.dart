@@ -24,4 +24,4 @@ void _handleThunkAction(Store<dynamic> store, ThunkAction<dynamic, dynamic> acti
   action(store);
 }
 
-Middleware thunkMiddleware = new TypedMiddlewareBinding<dynamic, ThunkAction>(_handleThunkAction);
+Middleware thunkMiddleware = new ProxyTypedMiddleware<dynamic, ThunkAction>(_handleThunkAction);
