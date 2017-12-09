@@ -275,7 +275,7 @@ class Store<S> {
   /// Due to limit of type system, the result store may no be a subtype of
   /// Store<S>, use [debugTypeMatcher] to assert it in checked mode.
   Store<S> find<S>({
-    Iterable<String> path,
+    @required Iterable<String> path,
     bool debugTypeMatcher(dynamic model),
   }) {
     Store<dynamic> store = _find(path);
