@@ -1,4 +1,7 @@
 # storey
+[![Travis Build](https://img.shields.io/travis/kezhuw/storey/master.svg)]()
+[![CircleCI Build](https://img.shields.io/circleci/project/github/kezhuw/storey/master.svg)]()
+[![Codecov Test Coverage](https://img.shields.io/codecov/c/github/kezhuw/storey/master.svg)]()
 
 Redux like store but hierarchical.
 
