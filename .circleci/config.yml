@@ -1,0 +1,10 @@
+version: 2
+jobs:
+  build:
+    docker:
+      - image: google/dart:1
+    steps:
+      - checkout
+      - run: pub get
+      - run: pub run test
+      - run: dartanalyzer --fatal-warnings .

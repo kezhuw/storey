@@ -67,3 +67,11 @@ Future<Null> main() async {
 
 ## License
 Released under The MIT License (MIT). See [LICENSE](LICENSE) for the full license text.
+
+## Clients
+
+* [readhub_flutter][] A mobile app client for [Readhub][] using [flutter][].
+
+[readhub_flutter]: https://github.com/kezhuw/readhub_flutter
+[Readhub]: https://readhub.me
+[flutter]: https://flutter.io
