@@ -155,29 +155,30 @@ class Store<S> {
     _dispatcher(action);
   }
 
+  Store<dynamic> _find(Iterable<String> path) {
+    Store<dynamic> current = this;
+    path.forEach((String name) {
+      current = current._children[name];
+      assert(current != null);
+    });
+    return current;
+  }
+
   /// Due to limit of type system, the result store may no be a subtype of
   /// Store<S>.
   Store<S> find<S>({
-    Iterable<dynamic> path,
+    Iterable<String> path,
     bool debugTypeMatcher(dynamic model),
   }) {
-    Store<dynamic> current = this;
-    path.forEach((dynamic key) {
-      current = current._children[key];
-      assert(current != null);
-    });
-    assert(debugTypeMatcher == null || debugTypeMatcher(current.state));
-    return current as Store<S>;
+    Store<dynamic> store = _find(path);
+    assert(debugTypeMatcher == null || debugTypeMatcher(store.state));
+    return store as Store<S>;
   }
 
   void dispatch(Action action, {
-    Iterable<dynamic> path = const Iterable.empty(),
+    Iterable<String> path = const Iterable.empty(),
   }) {
-    Store<dynamic> store = this;
-    path.forEach((dynamic key) {
-      store = store._children[key];
-      assert(store != null);
-    });
+    Store<dynamic> store = _find(path);
     store._dispatch(action);
   }
 
