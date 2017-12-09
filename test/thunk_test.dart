@@ -12,6 +12,7 @@ class BarState {
 void main() {
   group('Thunk actions', () {
     Store<FooState> store = new Store<FooState>(
+      name: 'foo',
       initialState: new FooState(),
       reducer: null,
       middlewares: [thunkMiddleware],

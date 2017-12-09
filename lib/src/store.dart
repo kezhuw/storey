@@ -96,20 +96,23 @@ class MergedTypedReducer<State> implements TypedReducer<State> {
 
 class Store<State> {
   Store({
+    @required this.name,
     @required State initialState,
     @required Reducer<State> reducer,
-    Map<dynamic, Store<dynamic>> children = const {},
+    List<Store<dynamic>> children = const [],
     List<Middleware> middlewares = const [],
   })
       : _state = initialState,
         _reducer = reducer,
-        _children = children,
+        _children = new Map.fromIterable(children, key: (Store<dynamic> store) => store.name),
         _middlewares = middlewares,
         _streamController = new StreamController<State>.broadcast() {
     _children.values.forEach((Store<dynamic> child) {
       child._parent = this;
     });
   }
+
+  final String name;
 
   @protected
   State _state;

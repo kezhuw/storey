@@ -35,7 +35,7 @@ void main() {
     Middleware typedMiddleware = new TypedMiddlewareBinding<FooState, FooAction>(fooMiddleware);
 
     test('middleware is called for matching state and action', () {
-      Store<FooState> fooStore = new Store<FooState>(reducer: nopReducer, initialState: new FooState());
+      Store<FooState> fooStore = new Store<FooState>(name: 'foo', reducer: nopReducer, initialState: new FooState());
 
       typedMiddleware(fooStore, new FooAction(), nextDispatcher);
 
@@ -43,7 +43,7 @@ void main() {
     });
 
     test('middleware is skipped for mismatched state', () {
-      Store<BarState> barStore = new Store<BarState>(reducer: nopReducer, initialState: new BarState());
+      Store<BarState> barStore = new Store<BarState>(name: 'bar', reducer: nopReducer, initialState: new BarState());
 
       typedMiddleware(barStore, new FooAction(), nextDispatcher);
 
@@ -51,7 +51,7 @@ void main() {
     });
 
     test('middleware is skipped for mismatched action', () {
-      Store<FooState> fooStore = new Store<FooState>(reducer: nopReducer, initialState: new FooState());
+      Store<FooState> fooStore = new Store<FooState>(name: 'foo', reducer: nopReducer, initialState: new FooState());
 
       typedMiddleware(fooStore, new BarAction(), nextDispatcher);
 
