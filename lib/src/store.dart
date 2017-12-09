@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:meta/meta.dart';
 
+/// Base class for all actions.
 @immutable
 abstract class Action {
   const Action();
@@ -11,23 +12,55 @@ class _ActionResult<Response> {
   Response value;
 }
 
+/// Action that expect a result.
 @immutable
 abstract class RequestAction<R> extends Action {
   RequestAction();
 
   final _ActionResult<R> _result = new _ActionResult<R>();
 
+  /// Get result.
   R get result => _result.value;
-  void set result(R newValue) {
-    _result.value = newValue;
+
+  /// Set result, usually by reducer.
+  void set result(R result) {
+    _result.value = result;
   }
 }
 
+/// A function that dispatch action to reducer in ambient store.
+///
+/// [Store.dispatch] should be considered as a Dispatcher with functionality to
+/// locate descendant store.
+///
+/// Also serve as bridge among chain of middlewares, let middleware pass action,
+/// possibly transformed, to next middleware in chain.
 typedef void Dispatcher(Action action);
+
+/// Middleware is a function that intercept actions before they reach reducer.
+///
+/// Middleware use [next] to pass action to next middleware in the middleware
+/// chain, things middleware can do include but not limited to:
+/// * Transform action.
+/// * Dispatch another action from begin through [Store.dispatch].
+/// * Conditional dispatch action based on state of store.
+/// * Dispatch action at a later time.
+/// * Customize dispatch behavior for particular action, such as [thunkMiddleware].
 typedef void Middleware(Store<dynamic> store, Action action, Dispatcher next);
 
+/// Signature for typed middleware which only got called for matching state and
+/// action type.
+///
+/// Due to type system limitation, all functions with typed middleware signature
+/// must be wrapped in class [ProxyTypedMiddleware] or similar to get desired
+/// behavior.
 typedef void TypedMiddleware<S, A extends Action>(Store<S> store, A action, Dispatcher next);
 
+/// Proxy to filter out unmatched calls to [TypedMiddleware].
+///
+/// Pass control to [middleware] if types of state and action matching generic types of
+/// this class, otherwise pass control to next middleware in chain.
+//
 // I wound like to export a static function instead of concrete class, but it won't work.
 //
 // Middleware createTypedMiddleware<S, A extends Action>(TypedMiddleware<S, A> typedMiddleware) {
@@ -36,6 +69,24 @@ typedef void TypedMiddleware<S, A extends Action>(Store<S> store, A action, Disp
 //
 // See: https://github.com/dart-lang/sdk/issues/31466 for more details.
 class ProxyTypedMiddleware<S, A extends Action> {
+  /// Create a typed middleware for store of type Store<[S]> and action of type [A].
+  ///
+  /// The [middleware] only got called if both types matching incoming store and
+  /// action. If you specify [S] as `dynamic`, all stores are matching. Similar
+  /// for action type [Action].
+  ///
+  /// CAUTION: Always specify type parameters [S] and [A] explicitly, as there
+  /// is no type inference in Dart 1. So use:
+  ///
+  /// Middleware thunkMiddleware = new ProxyTypedMiddleware<dynamic, ThunkAction>(_handleThunkAction);
+  ///
+  /// instead of:
+  ///
+  /// Middleware thunkMiddleware = new ProxyTypedMiddleware(_handleThunkAction);
+  ///
+  /// In later case, [middleware] will be called for all pairs of stores and actions.
+  ///
+  /// See: https://github.com/dart-lang/sdk/issues/31466 for more details.
   ProxyTypedMiddleware(this.middleware);
 
   final TypedMiddleware<S, A> middleware;
@@ -52,17 +103,47 @@ class ProxyTypedMiddleware<S, A extends Action> {
   }
 }
 
+/// Reducer is a function to reduce state based on give action.
 typedef S Reducer<S>(S state, Action action);
 
+/// Function signature for [Reducer] that expect specified action type.
+///
+/// Wrap it with [ProxyTypedReducer] to filter out unmatched action types.
 typedef S ActionReducer<S, A extends Action>(S state, A action);
 
+/// Base functional class for [Reducer]s that filter out all unmatched actions.
 abstract class TypedReducer<S> {
   bool _handlesAction(Action action);
 
   S call(S state, Action action);
 }
 
+/// Proxy to filter out unmatched calls to [ActionReducer].
 class ProxyTypedReducer<S, A extends Action> implements TypedReducer<S> {
+  /// Create a typed reducer for action of type [A]. For all other action types,
+  /// it just reduce to the input state.
+  ///
+  /// CAUTION: In order to function correct, it is required to specify type
+  /// parameters explicitly. Otherwise, [reducer] will be called with undesired
+  /// actions. For example:
+  ///
+  /// class FooAction extends Action {
+  /// };
+  ///
+  /// FooState _handleFooAction(FooState state, FooAction action) {
+  ///   return state;
+  /// }
+  ///
+  /// TypedReducer<FooState> reducer = new ProxyTypedReducer(_handleFooAction);
+  ///
+  /// The final `reducer` lost the type [A] represents for, which means [A] got
+  /// `dynamic` actually, thus unmatched actions are not filtered out.
+  ///
+  /// Specify type parameters explicitly solves this issue:
+  ///
+  /// TypedReducer<FooState> reducer = new ProxyTypedReducer<FooState, FooAction>(_handleFooAction);
+  ///
+  /// See: https://github.com/dart-lang/sdk/issues/31466 for more details.
   const ProxyTypedReducer(this.reducer);
 
   final ActionReducer<S, A> reducer;
@@ -78,7 +159,13 @@ class ProxyTypedReducer<S, A extends Action> implements TypedReducer<S> {
   }
 }
 
+/// Merge sequence of typed reducers to one.
+///
+/// MergedTypedReducer act as a rendezvous for sequence of typed reducers on
+/// state of same type. The result [Reducer] can be used as the sole reducer
+/// for store of the same state type.
 class MergedTypedReducer<S> implements TypedReducer<S> {
+  /// Create a [TypedReducer] from sequence of typed reducers.
   const MergedTypedReducer(this.reducers);
 
   final Iterable<TypedReducer<S>> reducers;
@@ -94,7 +181,23 @@ class MergedTypedReducer<S> implements TypedReducer<S> {
   }
 }
 
+/// Store is a storage place for state and its reducer with optional descendants.
+///
+/// Every store has a mandatory [name] which is used to identify itself to its
+/// parent and hence should be unique among siblings.
 class Store<S> {
+  /// Create a store to hold a binding of state and reducer.
+  ///
+  /// Use [children] to build a hierarchical store structure. Parent store use
+  /// child store's [name] to identify that child. Use [Store.find] to find its
+  /// descendant.
+  ///
+  /// Use [middlewares] to intercepts action dispatched to this store and its
+  /// descendants but not ancestors. Middlewares are chained from left to right,
+  /// from parent to child in [Store.dispatch].
+  ///
+  /// It is illegal to build a hierarchical store after any [Store.dispatch] on
+  /// its descendants.
   Store({
     @required this.name,
     @required S initialState,
@@ -112,11 +215,13 @@ class Store<S> {
     });
   }
 
+  /// Name of this store, parent store can [find] this store using its [name].
   final String name;
 
   @protected
   S _state;
 
+  /// Get current state.
   S get state => _state;
 
   final Reducer<S> _reducer;
@@ -164,8 +269,11 @@ class Store<S> {
     return current;
   }
 
+  /// Find descendant store using [path] which is a sequence of descendant
+  /// store's name.
+  ///
   /// Due to limit of type system, the result store may no be a subtype of
-  /// Store<S>.
+  /// Store<S>, use [debugTypeMatcher] to assert it in checked mode.
   Store<S> find<S>({
     Iterable<String> path,
     bool debugTypeMatcher(dynamic model),
@@ -175,6 +283,14 @@ class Store<S> {
     return store as Store<S>;
   }
 
+  /// Dispatch an [action] to store located at [path].
+  ///
+  /// Before [action] reach the reducer, a middleware chain which is constructed
+  /// from all middlewares in stores from topmost one down to the target store
+  /// is called. Middlewares from stores are chained from left to right, from
+  /// parent to child. If the middleware chain proceed to next [Dispatcher] of
+  /// last middleware, then the reducer is called, and a new state is reduced
+  /// and sent as data event to [stream].
   void dispatch(Action action, {
     Iterable<String> path = const Iterable.empty(),
   }) {
@@ -183,6 +299,12 @@ class Store<S> {
   }
 
   final StreamController<S> _streamController;
+
+
+  /// Stream of state [S].
+  ///
+  /// Every time the reducer is called, a new state is added to this stream as
+  /// a data event.
   Stream<S> get stream => _streamController.stream;
 
   void _broadcast() {
@@ -195,6 +317,7 @@ class Store<S> {
     }
   }
 
+  /// Teardown closes streams of this store and its descendants.
   void teardown() {
     _streamController.close();
     _children.values.forEach((Store<dynamic> child) {
