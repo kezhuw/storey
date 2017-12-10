@@ -50,7 +50,7 @@ void main() {
     });
 
 
-    Reducer<ParentState> mergedParentReducer = new MergedTypedReducer<ParentState>(<TypedReducer<ParentState>>[
+    TypedReducer<ParentState> mergedParentReducer = new MergedTypedReducer<ParentState>(<TypedReducer<ParentState>>[
       typedParentReducer,
       new ProxyTypedReducer<ParentState, ChildAction>(mixedReducer),
     ]);
@@ -77,6 +77,24 @@ void main() {
       mergedParentReducer(parentState, new DummyAction());
 
       expect(logs, []);
+    });
+
+    test('throw error if multiple (proxy) typed reducer can accept dispatching action', () {
+      Reducer<ParentState> parentReducer = new MergedTypedReducer<ParentState>(<TypedReducer<ParentState>>[
+        typedParentReducer,
+        typedParentReducer,
+      ]);
+
+      expect(() => parentReducer(new ParentState(), new ParentAction()), throwsStateError);
+    });
+
+    test('throw error if multiple (merged) typed reducer can accept dispatching action', () {
+      Reducer<ParentState> parentReducer = new MergedTypedReducer<ParentState>(<TypedReducer<ParentState>>[
+        mergedParentReducer,
+        mergedParentReducer,
+      ]);
+
+      expect(() => parentReducer(new ParentState(), new ParentAction()), throwsStateError);
     });
 
   });
