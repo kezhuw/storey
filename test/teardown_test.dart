@@ -3,64 +3,64 @@ import 'dart:async';
 import 'package:test/test.dart';
 import 'package:storey/storey.dart';
 
-class FooState {
+class ParentState {
 }
 
-class FooAction extends Action {
-  FooAction(this.state);
+class ParentAction extends Action {
+  ParentAction(this.state);
 
-  final FooState state;
+  final ParentState state;
 }
 
-class BarState {
+class ChildState {
 }
 
 
 void main() {
   group('Store.teardown', () {
-    Store<FooState> fooStore;
-    Store<BarState> barStore;
+    Store<ParentState> parentStore;
+    Store<ChildState> childStore;
 
     setUp(() {
-      barStore = new Store<BarState>(
-        name: 'bar',
+      childStore = new Store<ChildState>(
+        name: 'child',
         initialState: null,
         reducer: null,
       );
 
-      fooStore = new Store<FooState>(
-        name: 'foo',
+      parentStore = new Store<ParentState>(
+        name: 'parent',
         initialState: null,
-        reducer: (FooState state, Action action) => (action as FooAction).state,
-        children: [barStore],
+        reducer: (ParentState state, Action action) => (action as ParentAction).state,
+        children: [childStore],
       );
     });
 
     test('Store.stream is closed if this store is teardown', () async {
       Completer<String> completer = new Completer<String>();
-      fooStore.stream.listen(null, onDone: () => completer.complete('closed'));
+      parentStore.stream.listen(null, onDone: () => completer.complete('closed'));
 
-      fooStore.teardown();
+      parentStore.teardown();
 
       expect(await completer.future, 'closed');
     });
 
     test('Store.stream is closed if ancestor store is teardown', () async {
       Completer<String> completer = new Completer<String>();
-      barStore.stream.listen(null, onDone: () => completer.complete('closed'));
+      childStore.stream.listen(null, onDone: () => completer.complete('closed'));
 
-      fooStore.teardown();
+      parentStore.teardown();
 
       expect(await completer.future, 'closed');
     });
 
     test('Store.stream is not closed if descendant store is teardown', () async {
-      Future<FooState> future = fooStore.stream.first;
+      Future<ParentState> future = parentStore.stream.first;
 
-      barStore.teardown();
+      childStore.teardown();
 
-      FooAction action = new FooAction(new FooState());
-      fooStore.dispatch(action);
+      ParentAction action = new ParentAction(new ParentState());
+      parentStore.dispatch(action);
 
       expect(await future, action.state);
     });

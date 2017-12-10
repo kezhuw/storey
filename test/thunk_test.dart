@@ -3,113 +3,113 @@ import 'dart:async';
 import 'package:test/test.dart';
 import 'package:storey/storey.dart';
 
-class FooState {
+class ParentState {
 }
 
-class BarState {
+class ChildState {
 }
 
 void main() {
   group('Thunk actions', () {
     List<String> logs = [];
-    Store<FooState> fooStore;
-    Store<BarState> barStore;
+    Store<ParentState> parentStore;
+    Store<ChildState> childStore;
 
     setUp(() {
       logs.clear();
 
-      fooStore = new Store<FooState>(
-        name: 'foo',
-        initialState: new FooState(),
+      parentStore = new Store<ParentState>(
+        name: 'parent',
+        initialState: new ParentState(),
         reducer: null,
         middlewares: [thunkMiddleware],
       );
 
-      barStore = new Store<BarState>(
-        name: 'foo',
-        initialState: new BarState(),
+      childStore = new Store<ChildState>(
+        name: 'parent',
+        initialState: new ChildState(),
         reducer: null,
         middlewares: [thunkMiddleware],
       );
     });
 
-    void voidFooThunk(Store<FooState> store) {
-      logs.add('void foo thunk');
+    void voidParentThunk(Store<ParentState> store) {
+      logs.add('void parent thunk');
     }
 
-    String syncFooThunk(Store<FooState> store) {
-      logs.add('sync foo thunk');
-      return 'syncFooThunk';
+    String syncParentThunk(Store<ParentState> store) {
+      logs.add('sync parent thunk');
+      return 'syncParentThunk';
     }
 
-    Future<String> asyncFooThunk(Store<FooState> store) async {
-      logs.add('async foo thunk');
-      return await new Future<String>.value('foo thunk result');
+    Future<String> asyncParentThunk(Store<ParentState> store) async {
+      logs.add('async parent thunk');
+      return await new Future<String>.value('parent thunk result');
     }
 
     test('thunk action is called for matching state', () {
-      ThunkAction<FooState, String> action = new ThunkAction<FooState, String>(syncFooThunk);
+      ThunkAction<ParentState, String> action = new ThunkAction<ParentState, String>(syncParentThunk);
 
-      fooStore.dispatch(action);
+      parentStore.dispatch(action);
 
-      expect(logs, ['sync foo thunk']);
-      expect(action.result, 'syncFooThunk');
+      expect(logs, ['sync parent thunk']);
+      expect(action.result, 'syncParentThunk');
     });
 
     test('thunk action is skipped for mismatched state', () {
-      ThunkAction<FooState, String> action = new ThunkAction<FooState, String>(syncFooThunk);
+      ThunkAction<ParentState, String> action = new ThunkAction<ParentState, String>(syncParentThunk);
 
-      barStore.dispatch(action);
+      childStore.dispatch(action);
 
       expect(logs, []);
       expect(action.result, isNull);
     });
 
     test('void thunk action is called for matching state', () {
-      VoidThunkAction<FooState> action = new VoidThunkAction<FooState>(voidFooThunk);
+      VoidThunkAction<ParentState> action = new VoidThunkAction<ParentState>(voidParentThunk);
 
-      fooStore.dispatch(action);
+      parentStore.dispatch(action);
 
-      expect(logs, ['void foo thunk']);
+      expect(logs, ['void parent thunk']);
       expect(action.result, isNull);
     });
 
     test('void thunk action is skipped for mismatched state', () {
-      ThunkAction<FooState, Null> action = new VoidThunkAction<FooState>(voidFooThunk);
+      ThunkAction<ParentState, Null> action = new VoidThunkAction<ParentState>(voidParentThunk);
 
-      barStore.dispatch(action);
+      childStore.dispatch(action);
 
       expect(logs, []);
       expect(action.result, isNull);
     });
 
     test('async thunk action is called for matching state', () async {
-      AsyncThunkAction<FooState, String> action = new AsyncThunkAction<FooState, String>(asyncFooThunk);
+      AsyncThunkAction<ParentState, String> action = new AsyncThunkAction<ParentState, String>(asyncParentThunk);
 
       expect(action.result, isNull);
 
-      fooStore.dispatch(action);
+      parentStore.dispatch(action);
 
       expect(action.result, isNotNull);
       expect(action.result, const isInstanceOf<Future<String>>());
 
       String s = await action.result;
 
-      expect(s, 'foo thunk result');
+      expect(s, 'parent thunk result');
 
-      expect(logs, ['async foo thunk']);
+      expect(logs, ['async parent thunk']);
     });
 
     test('async thunk action is skipped for mismatched state', () async {
-      Future<String> barThunk(Store<BarState> store) async {
-        return await new Future<String>.value('bar thunk result');
+      Future<String> childThunk(Store<ChildState> store) async {
+        return await new Future<String>.value('child thunk result');
       }
 
-      ThunkAction<BarState, Future<String>> action = new AsyncThunkAction<BarState, String>(barThunk);
+      ThunkAction<ChildState, Future<String>> action = new AsyncThunkAction<ChildState, String>(childThunk);
 
       expect(action.result, isNull);
 
-      fooStore.dispatch(action);
+      parentStore.dispatch(action);
 
       expect(action.result, isNull);
 

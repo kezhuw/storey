@@ -1,16 +1,16 @@
 import 'package:test/test.dart';
 import 'package:storey/storey.dart';
 
-class FooState {
+class ParentState {
 }
 
-class BarState {
+class ChildState {
 }
 
-class FooAction extends Action {
+class ParentAction extends Action {
 }
 
-class BarAction extends Action {
+class ChildAction extends Action {
 }
 
 void main() {
@@ -23,8 +23,8 @@ void main() {
   group('typed middleware', () {
     Reducer nopReducer = (dynamic state, Action action) => state;
 
-    void fooMiddleware(Store<FooState> store, FooAction action, Dispatcher next) {
-      logs.add('foo');
+    void parentMiddleware(Store<ParentState> store, ParentAction action, Dispatcher next) {
+      logs.add('parent');
       next(action);
     }
 
@@ -32,36 +32,36 @@ void main() {
       logs.add('next');
     }
 
-    Middleware typedMiddleware = new ProxyTypedMiddleware<FooState, FooAction>(fooMiddleware);
+    Middleware typedMiddleware = new ProxyTypedMiddleware<ParentState, ParentAction>(parentMiddleware);
 
     test('middleware is called for matching store and action', () {
-      Store<FooState> fooStore = new Store<FooState>(name: 'foo', reducer: nopReducer, initialState: new FooState());
+      Store<ParentState> parentStore = new Store<ParentState>(name: 'parent', reducer: nopReducer, initialState: new ParentState());
 
-      typedMiddleware(fooStore, new FooAction(), nextDispatcher);
+      typedMiddleware(parentStore, new ParentAction(), nextDispatcher);
 
-      expect(logs, <String>['foo', 'next']);
+      expect(logs, <String>['parent', 'next']);
     });
 
     test('middleware is called for matching store, with null state, and action', () {
-      Store<FooState> fooStore = new Store<FooState>(name: 'foo', reducer: nopReducer, initialState: null);
+      Store<ParentState> parentStore = new Store<ParentState>(name: 'parent', reducer: nopReducer, initialState: null);
 
-      typedMiddleware(fooStore, new FooAction(), nextDispatcher);
+      typedMiddleware(parentStore, new ParentAction(), nextDispatcher);
 
-      expect(logs, <String>['foo', 'next']);
+      expect(logs, <String>['parent', 'next']);
     });
 
     test('middleware is skipped for mismatched state', () {
-      Store<BarState> barStore = new Store<BarState>(name: 'bar', reducer: nopReducer, initialState: new BarState());
+      Store<ChildState> childStore = new Store<ChildState>(name: 'child', reducer: nopReducer, initialState: new ChildState());
 
-      typedMiddleware(barStore, new FooAction(), nextDispatcher);
+      typedMiddleware(childStore, new ParentAction(), nextDispatcher);
 
       expect(logs, <String>['next']);
     });
 
     test('middleware is skipped for mismatched action', () {
-      Store<FooState> fooStore = new Store<FooState>(name: 'foo', reducer: nopReducer, initialState: new FooState());
+      Store<ParentState> parentStore = new Store<ParentState>(name: 'parent', reducer: nopReducer, initialState: new ParentState());
 
-      typedMiddleware(fooStore, new BarAction(), nextDispatcher);
+      typedMiddleware(parentStore, new ChildAction(), nextDispatcher);
 
       expect(logs, <String>['next']);
     });

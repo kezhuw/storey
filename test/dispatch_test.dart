@@ -1,13 +1,13 @@
 import 'package:test/test.dart';
 import 'package:storey/storey.dart';
 
-class FooState {
+class ParentState {
 }
 
-class BarState {
+class ChildState {
 }
 
-class FoobarState {
+class GrandsonState {
 }
 
 class ValueAction extends Action {
@@ -57,86 +57,86 @@ void main() {
   }
 
   group('Store.dispatch', () {
-    Store<FooState> fooStore;
-    Store<BarState> barStore;
-    Store<FoobarState> foobarStore;
+    Store<ParentState> parentStore;
+    Store<ChildState> childStore;
+    Store<GrandsonState> grandsonStore;
 
     setUp(() {
-      foobarStore = new Store<FoobarState>(
-        name: 'foobar',
+      grandsonStore = new Store<GrandsonState>(
+        name: 'grandson',
         initialState: null,
-        reducer: (FoobarState state, Action action) {
+        reducer: (GrandsonState state, Action action) {
           if (action is ValueAction) {
-            logs.add('foobar');
+            logs.add('grandson');
             logs.add(action.value);
           }
           return state;
         },
       );
 
-      barStore = new Store<BarState>(
-        name: 'bar',
+      childStore = new Store<ChildState>(
+        name: 'child',
         initialState: null,
-        reducer: (BarState state, Action action) {
+        reducer: (ChildState state, Action action) {
           if (action is ValueAction) {
-            logs.add('bar');
+            logs.add('child');
             logs.add(action.value);
           }
           return state;
         },
-        children: [foobarStore],
+        children: [grandsonStore],
         middlewares: [skipMiddleware, loggingMiddleware],
       );
 
-      fooStore = new Store<FooState>(
-        name: 'foo',
+      parentStore = new Store<ParentState>(
+        name: 'parent',
         initialState: null,
-        reducer: (FooState state, Action action) {
+        reducer: (ParentState state, Action action) {
           if (action is ValueAction) {
-            logs.add('foo');
+            logs.add('parent');
             logs.add(action.value);
           }
           return state;
         },
-        children: [barStore],
+        children: [childStore],
         middlewares: [transformSkipActionMiddleware],
       );
     });
 
     test('dispatch reach reducer', () {
-      foobarStore.dispatch(const ValueAction(value: 'hello', logging: false));
-      expect(logs, ['foobar', 'hello']);
+      grandsonStore.dispatch(const ValueAction(value: 'hello', logging: false));
+      expect(logs, ['grandson', 'hello']);
     });
 
     test('middlewares are called before reducer', () {
-      barStore.dispatch(const ValueAction(value: 'hello'));
-      expect(logs, ['logging', 'hello', 'bar', 'hello']);
+      childStore.dispatch(const ValueAction(value: 'hello'));
+      expect(logs, ['logging', 'hello', 'child', 'hello']);
     });
 
     test('middlewares from ancestors are called', () {
-      foobarStore.dispatch(const ValueAction(value: 'hello'));
-      expect(logs, ['logging', 'hello', 'foobar', 'hello']);
+      grandsonStore.dispatch(const ValueAction(value: 'hello'));
+      expect(logs, ['logging', 'hello', 'grandson', 'hello']);
     });
 
     test('middlewares from descendants are not called', () {
-      fooStore.dispatch(const ValueAction(value: 'hello'));
-      expect(logs, ['foo', 'hello']);
+      parentStore.dispatch(const ValueAction(value: 'hello'));
+      expect(logs, ['parent', 'hello']);
     });
 
     test('middlewares are chained from left to right', () {
-      barStore.dispatch(const SkipAction());
+      childStore.dispatch(const SkipAction());
       expect(logs, []);
 
-      barStore.dispatch(const ValueAction(value: 'hello'));
-      expect(logs, ['logging', 'hello', 'bar', 'hello']);
+      childStore.dispatch(const ValueAction(value: 'hello'));
+      expect(logs, ['logging', 'hello', 'child', 'hello']);
     });
 
     test('middlewares are chained from parent to child', () {
-      barStore.dispatch(new SkipAction());
+      childStore.dispatch(new SkipAction());
       expect(logs, []);
 
-      barStore.dispatch(const TransformSkipAction());
-      expect(logs, ['logging', 'TransformSkipAction', 'bar', 'TransformSkipAction']);
+      childStore.dispatch(const TransformSkipAction());
+      expect(logs, ['logging', 'TransformSkipAction', 'child', 'TransformSkipAction']);
     });
   });
 }

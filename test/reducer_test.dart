@@ -1,13 +1,13 @@
 import 'package:test/test.dart';
 import 'package:storey/storey.dart';
 
-class FooState {
+class ParentState {
 }
 
-class FooAction extends Action {
+class ParentAction extends Action {
 }
 
-class BarAction extends Action {
+class ChildAction extends Action {
 }
 
 class DummyAction extends Action {
@@ -21,60 +21,60 @@ void main() {
   });
 
   group('typed reducer', () {
-    FooState fooReducer(FooState fooState, FooAction action) {
-      logs.add('foo');
-      return fooState;
+    ParentState parentReducer(ParentState parentState, ParentAction action) {
+      logs.add('parent');
+      return parentState;
     }
 
-    FooState foobarReducer(FooState fooState, BarAction action) {
-      logs.add('foobar');
-      return fooState;
+    ParentState mixedReducer(ParentState parentState, ChildAction action) {
+      logs.add('mixed');
+      return parentState;
     }
 
-    TypedReducer<FooState> typedFooReducer = new ProxyTypedReducer<FooState, FooAction>(fooReducer);
+    TypedReducer<ParentState> typedParentReducer = new ProxyTypedReducer<ParentState, ParentAction>(parentReducer);
 
     test('reducer is called for matching action', () {
-      FooState fooState = new FooState();
+      ParentState parentState = new ParentState();
 
-      typedFooReducer(fooState, new FooAction());
+      typedParentReducer(parentState, new ParentAction());
 
-      expect(logs, ['foo']);
+      expect(logs, ['parent']);
     });
 
     test('reducer is not called for mismatched action', () {
-      FooState fooState = new FooState();
+      ParentState parentState = new ParentState();
 
-      typedFooReducer(fooState, new BarAction());
+      typedParentReducer(parentState, new ChildAction());
 
       expect(logs, []);
     });
 
 
-    Reducer<FooState> mergedFooReducer = new MergedTypedReducer<FooState>(<TypedReducer<FooState>>[
-      typedFooReducer,
-      new ProxyTypedReducer<FooState, BarAction>(foobarReducer),
+    Reducer<ParentState> mergedParentReducer = new MergedTypedReducer<ParentState>(<TypedReducer<ParentState>>[
+      typedParentReducer,
+      new ProxyTypedReducer<ParentState, ChildAction>(mixedReducer),
     ]);
 
     test('only matching reducer in merged reducers is called', () {
-      FooState fooState = new FooState();
+      ParentState parentState = new ParentState();
 
-      mergedFooReducer(fooState, new FooAction());
+      mergedParentReducer(parentState, new ParentAction());
 
-      expect(logs, ['foo']);
+      expect(logs, ['parent']);
     });
 
     test('only matching reducer in merged reducers is called', () {
-      FooState fooState = new FooState();
+      ParentState parentState = new ParentState();
 
-      mergedFooReducer(fooState, new BarAction());
+      mergedParentReducer(parentState, new ChildAction());
 
-      expect(logs, ['foobar']);
+      expect(logs, ['mixed']);
     });
 
     test('only matching reducer in merged reducers is called', () {
-      FooState fooState = new FooState();
+      ParentState parentState = new ParentState();
 
-      mergedFooReducer(fooState, new DummyAction());
+      mergedParentReducer(parentState, new DummyAction());
 
       expect(logs, []);
     });

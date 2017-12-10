@@ -1,55 +1,55 @@
 import 'package:test/test.dart';
 import 'package:storey/storey.dart';
 
-class FooState {
+class ParentState {
 }
 
-class BarState {
+class ChildState {
 }
 
-class FoobarState {
+class GrandsonState {
 }
 
 void main() {
   group('Store.find', () {
-    Store<FooState> fooStore;
-    Store<BarState> barStore;
-    Store<FoobarState> foobarStore;
+    Store<ParentState> parentStore;
+    Store<ChildState> childStore;
+    Store<GrandsonState> grandsonStore;
 
     setUp(() {
-      foobarStore = new Store<FoobarState>(
-        name: 'foobar',
+      grandsonStore = new Store<GrandsonState>(
+        name: 'grandson',
         initialState: null,
         reducer: null,
       );
 
-      barStore = new Store<BarState>(
-        name: 'bar',
+      childStore = new Store<ChildState>(
+        name: 'child',
         initialState: null,
         reducer: null,
-        children: [foobarStore],
+        children: [grandsonStore],
       );
 
-      fooStore = new Store<FooState>(
-        name: 'foo',
+      parentStore = new Store<ParentState>(
+        name: 'parent',
         initialState: null,
         reducer: null,
-        children: [barStore],
+        children: [childStore],
       );
     });
 
     test('empty path to find this store', () {
-      expect(identical(fooStore.find(path: const Iterable.empty()), fooStore), true);
+      expect(identical(parentStore.find(path: const Iterable.empty()), parentStore), true);
 
-      expect(identical(barStore.find(path: const Iterable.empty()), barStore), true);
+      expect(identical(childStore.find(path: const Iterable.empty()), childStore), true);
     });
 
     test('use path to find descendant store', () {
-      expect(identical(barStore, fooStore.find(path: ['bar'])), true);
+      expect(identical(childStore, parentStore.find(path: ['child'])), true);
 
-      expect(identical(foobarStore, barStore.find(path: ['foobar'])), true);
+      expect(identical(grandsonStore, childStore.find(path: ['grandson'])), true);
 
-      expect(identical(foobarStore, fooStore.find(path: ['bar', 'foobar'])), true);
+      expect(identical(grandsonStore, parentStore.find(path: ['child', 'grandson'])), true);
     });
   });
 }
