@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.2.1
+- Add factory constructor Action.empty() to construct empty action
+- Throw StateError if multiple reducers accept the dispatching action
+
 ## 0.2.0
 - Refactor thunk as a function that accepts a store and returns a value
 
