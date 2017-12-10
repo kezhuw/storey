@@ -21,7 +21,10 @@ void main() {
       parentStore = new Store<ParentState>(
         name: 'parent',
         initialState: new ParentState(),
-        reducer: null,
+        reducer: (ParentState state, Action action) {
+          logs.add('parent non thunk action');
+          return state;
+        },
         middlewares: [thunkMiddleware],
       );
 
@@ -46,6 +49,11 @@ void main() {
       logs.add('async parent thunk');
       return await new Future<String>.value('parent thunk result');
     }
+
+    test('non thunk action reach reducer', () {
+      parentStore.dispatch(new Action.empty());
+      expect(logs, ['parent non thunk action']);
+    });
 
     test('thunk action is called for matching state', () {
       ThunkAction<ParentState, String> action = new ThunkAction<ParentState, String>(syncParentThunk);
