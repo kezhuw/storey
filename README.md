@@ -71,6 +71,10 @@ Future<Null> main() async {
 ## License
 Released under The MIT License (MIT). See [LICENSE](LICENSE) for the full license text.
 
+## View Bindings
+
+* [flutter_storey][] Flutter binding to storey.
+
 ## Clients
 
 * [readhub_flutter][] A mobile app client for [Readhub][] using [flutter][].
@@ -78,3 +82,4 @@ Released under The MIT License (MIT). See [LICENSE](LICENSE) for the full licens
 [readhub_flutter]: https://github.com/kezhuw/readhub_flutter
 [Readhub]: https://readhub.me
 [flutter]: https://flutter.io
+[flutter_storey]: https://github.com/kezhuw/flutter_storey
