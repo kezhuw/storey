@@ -6,6 +6,16 @@ import 'package:meta/meta.dart';
 @immutable
 abstract class Action {
   const Action();
+
+  /// Construct a empty action without implementing one yourself.
+  factory Action.empty() {
+    return const _EmptyAction();
+  }
+}
+
+@immutable
+class _EmptyAction extends Action {
+  const _EmptyAction();
 }
 
 class _ActionResult<Response> {
