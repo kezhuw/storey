@@ -49,6 +49,7 @@ Reducer<StringState> _reducer = new MergedTypedReducer<StringState>(
 
 Store<StringState> createStore(String initialStr) {
   return new Store<StringState>(
+    name: 'app',
     initialState: new StringState(initialStr),
     reducer: _reducer,
     middlewares: <Middleware>[thunkMiddleware],
