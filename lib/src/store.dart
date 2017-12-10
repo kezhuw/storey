@@ -158,7 +158,7 @@ class ProxyTypedReducer<S, A extends Action> implements TypedReducer<S> {
 
   final ActionReducer<S, A> reducer;
 
-  @protected
+  @override
   bool _handlesAction(Action action) => action is A;
 
   S call(S state, Action action) {
@@ -172,21 +172,35 @@ class ProxyTypedReducer<S, A extends Action> implements TypedReducer<S> {
 /// Merge sequence of typed reducers to one.
 ///
 /// MergedTypedReducer act as a rendezvous for sequence of typed reducers on
-/// state of same type. The result [Reducer] can be used as the sole reducer
-/// for store of the same state type.
+/// state of same type. Only one reducer at most is allowed to accept the
+/// dispatching action, otherwise an [StateError] is thrown in checked mode.
+/// The result [Reducer] can be used as the sole reducer for store of the same
+/// state type.
 class MergedTypedReducer<S> implements TypedReducer<S> {
   /// Create a [TypedReducer] from sequence of typed reducers.
   const MergedTypedReducer(this.reducers);
 
   final Iterable<TypedReducer<S>> reducers;
 
+  bool _debugAtMostOneMatchedReducer(Action action) {
+    Iterable matchs = reducers.where((TypedReducer<S> reducer) => reducer._handlesAction(action));
+    if (matchs.length > 1) {
+      throw new StateError(
+        'Only one reducer at most is allowed to accept dispatching action.' +
+        'But ${matchs.length} reducers claim that they accept action of type ${action.runtimeType}'
+      );
+    }
+    return true;
+  }
+
+  @override
   bool _handlesAction(Action action) {
-    assert(reducers.where((TypedReducer<S> reducer) => reducer._handlesAction(action)).length <= 1);
+    assert(_debugAtMostOneMatchedReducer(action));
     return reducers.any((TypedReducer<S> reducer) => reducer._handlesAction(action));
   }
 
   S call(S state, Action action) {
-    assert(reducers.where((TypedReducer<S> reducer) => reducer._handlesAction(action)).length <= 1);
+    assert(_debugAtMostOneMatchedReducer(action));
     return reducers.fold(state, (S model, TypedReducer<S> reducer) => reducer(model, action));
   }
 }
