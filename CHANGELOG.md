@@ -1,5 +1,8 @@
 # Changelog
 
+## 0.2.2
+- Fix test coverage
+
 ## 0.2.1
 - Add factory constructor Action.empty() to construct empty action
 - Throw StateError if multiple reducers accept the dispatching action
