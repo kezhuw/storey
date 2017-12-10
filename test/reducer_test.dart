@@ -20,6 +20,15 @@ void main() {
     logs.clear();
   });
 
+  bool isCheckedMode() {
+    try {
+      assert(false);
+    } on AssertionError catch (e) {
+      return true;
+    }
+    return false;
+  }
+
   group('typed reducer', () {
     ParentState parentReducer(ParentState parentState, ParentAction action) {
       logs.add('parent');
@@ -85,7 +94,12 @@ void main() {
         typedParentReducer,
       ]);
 
-      expect(() => parentReducer(new ParentState(), new ParentAction()), throwsStateError);
+      if (isCheckedMode()) {
+        expect(() => parentReducer(new ParentState(), new ParentAction()), throwsStateError);
+      } else {
+        parentReducer(new ParentState(), new ParentAction());
+        expect(logs, ['parent', 'parent']);
+      }
     });
 
     test('throw error if multiple (merged) typed reducer can accept dispatching action', () {
@@ -94,7 +108,12 @@ void main() {
         mergedParentReducer,
       ]);
 
-      expect(() => parentReducer(new ParentState(), new ParentAction()), throwsStateError);
+      if (isCheckedMode()) {
+        expect(() => parentReducer(new ParentState(), new ParentAction()), throwsStateError);
+      } else {
+        parentReducer(new ParentState(), new ParentAction());
+        expect(logs, ['parent', 'parent']);
+      }
     });
 
   });
