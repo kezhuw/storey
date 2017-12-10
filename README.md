@@ -79,7 +79,18 @@ Released under The MIT License (MIT). See [LICENSE](LICENSE) for the full licens
 
 * [readhub_flutter][] A mobile app client for [Readhub][] using [flutter][].
 
+## Recommendations
+
+* [redux.dart][] and [flutter_redux][], a redux porting in dart and its flutter binding.
+* [greencat][] and [flutter_greencat][], another redux porting and its flutter binding.
+
 [readhub_flutter]: https://github.com/kezhuw/readhub_flutter
 [Readhub]: https://readhub.me
 [flutter]: https://flutter.io
 [flutter_storey]: https://github.com/kezhuw/flutter_storey
+
+[redux.dart]: https://github.com/johnpryan/redux.dart
+[flutter_redux]: https://github.com/brianegan/flutter_redux
+
+[greencat]: https://github.com/alexeieleusis/greencat
+[flutter_greencat]: https://gitlab.com/brianegan/flutter_greencat
