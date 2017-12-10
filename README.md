@@ -1,4 +1,5 @@
 # storey
+[![Pub](https://img.shields.io/pub/v/storey.svg)](https://pub.dartlang.org/packages/storey)
 [![Travis CI](https://travis-ci.org/kezhuw/storey.svg?branch=master)](https://travis-ci.org/kezhuw/storey)
 [![CircleCI](https://circleci.com/gh/kezhuw/storey.svg?style=svg)](https://circleci.com/gh/kezhuw/storey)
 [![codecov](https://codecov.io/gh/kezhuw/storey/branch/master/graph/badge.svg)](https://codecov.io/gh/kezhuw/storey)
